@@ -2,150 +2,232 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <title>電機科點餐 Pro - 22家全營業時間版</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>電機科智慧點餐統計系統👩🏼‍🍳</title>
     <style>
-        :root { --primary: #0056b3; --dark: #1e293b; }
-        body { font-family: "Microsoft JhengHei", sans-serif; background: #f0f2f5; margin: 0; padding: 15px; }
-        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 16px; box-shadow: 0 8px 30px rgba(0,0,0,0.1); }
+        :root { --primary: #0056b3; --bg: #f8fafc; --text: #1e293b; --success: #10b981; }
+        body { font-family: "PingFang TC", "Microsoft JhengHei", sans-serif; background: var(--bg); margin: 0; padding: 15px; color: var(--text); line-height: 1.6; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 25px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
         
-        /* 商店大格子介面 */
-        .store-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; margin-bottom: 25px; }
-        .store-card { padding: 15px; border: 2px solid #e2e8f0; border-radius: 12px; cursor: pointer; transition: 0.3s; position: relative; background: #fff; }
-        .store-card.active { border-color: var(--primary); background: #f0f7ff; box-shadow: 0 4px 12px rgba(0,86,179,0.15); }
-        .store-card h3 { margin: 0 0 8px 0; color: var(--dark); font-size: 1.1rem; }
-        .store-card p { margin: 4px 0; font-size: 0.85rem; color: #64748b; line-height: 1.4; }
-        .status-tag { position: absolute; top: 12px; right: 12px; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
+        /* 商店選擇格子 */
+        .store-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; margin-bottom: 25px; }
+        .store-card { padding: 18px; border: 2px solid #e2e8f0; border-radius: 12px; background: white; cursor: pointer; transition: 0.3s; position: relative; }
+        .store-card:hover { border-color: var(--primary); background: #f0f7ff; transform: translateY(-3px); }
+        .store-card.active { border-color: var(--primary); background: #e0f0ff; box-shadow: 0 4px 12px rgba(0,86,179,0.15); }
+        .store-card h3 { margin: 0 0 8px 0; color: var(--primary); font-size: 1.15rem; }
+        .store-card p { margin: 4px 0; font-size: 0.85rem; color: #64748b; }
 
-        /* 大規格方塊 */
-        .spec-label { font-size: 1rem; color: #1e293b; margin: 18px 0 8px; font-weight: bold; border-left: 4px solid var(--primary); padding-left: 8px; }
-        .spec-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 15px; }
-        .spec-item { border: 2px solid #cbd5e1; color: #475569; padding: 12px 5px; border-radius: 10px; cursor: pointer; font-size: 14px; text-align: center; font-weight: bold; transition: 0.2s; }
-        .spec-item.selected { border-color: var(--primary); background: var(--primary); color: white; }
+        /* 規格方塊 (依照截圖樣式) */
+        .spec-label { font-size: 1rem; color: #1e293b; margin: 15px 0 8px; font-weight: bold; border-left: 5px solid var(--primary); padding-left: 10px; }
+        .spec-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
+        .spec-item { border: 2.5px solid var(--primary); color: var(--primary); background: white; padding: 12px 5px; border-radius: 10px; cursor: pointer; font-size: 14px; text-align: center; font-weight: bold; transition: 0.2s; }
+        .spec-item.selected { background: var(--primary); color: white; transform: scale(1.05); }
 
-        /* 訂單卡片 */
-        .person-card { border: 1px solid #e2e8f0; border-top: 6px solid var(--primary); border-radius: 15px; padding: 20px; margin-bottom: 25px; background: #fff; }
-        .item-box { background: #f8fafc; padding: 18px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #edf2f7; }
-        select { width: 100%; padding: 14px; border-radius: 10px; border: 2px solid #cbd5e1; font-size: 1.1rem; appearance: none; background: #fff; }
+        /* 點餐清單卡片 */
+        .person-card { border: 1px solid #e2e8f0; border-top: 8px solid var(--primary); border-radius: 15px; padding: 25px; margin-bottom: 25px; background: #fff; }
+        .item-box { background: #f1f5f9; padding: 20px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #e2e8f0; }
+        select { width: 100%; padding: 15px; border-radius: 10px; border: 2px solid #cbd5e1; font-size: 1.1rem; appearance: none; background: #fff; cursor: pointer; }
         
-        .footer { position: sticky; bottom: 0; background: var(--dark); color: white; padding: 20px; border-radius: 15px 15px 0 0; display: flex; justify-content: space-between; align-items: center; z-index: 100; }
-        .btn-copy { width: 100%; padding: 18px; background: #2563eb; color: white; border: none; font-size: 1.2rem; font-weight: bold; cursor: pointer; border-radius: 0 0 15px 15px; }
+        .footer { position: sticky; bottom: 0; background: var(--text); color: white; padding: 20px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; z-index: 1000; }
+        .btn-copy { width: 100%; padding: 18px; background: #2563eb; color: white; border: none; font-size: 1.2rem; font-weight: bold; cursor: pointer; border-radius: 12px; margin-top: 15px; }
+        .price-total { color: #facc15; font-size: 2rem; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1 style="text-align:center; color:var(--dark);">⚡ 電機科智慧點餐統計 Pro</h1>
-    <p style="text-align:center; color: #64748b; margin-top:-10px;">22家全品項、時間、電話、自動算錢系統</p>
-    
+    <h1 style="text-align:center; color:var(--text); font-size: 2rem; margin-bottom:30px;">⚡ 電機科智慧點餐統計 Pro (22家地毯式掃描全品項版)</h1>
     <div class="store-grid" id="storeSelector"></div>
 
-    <div id="storeInfo" style="display:none; background: #f0f9ff; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #bae6fd;">
-        <strong id="activeStoreName" style="font-size:1.4rem; color:var(--primary);"></strong>
-        <p id="activeStoreDetail" style="margin:5px 0; color:#0369a1;"></p>
+    <div id="storeActiveBox" style="display:none; background: #eff6ff; padding: 20px; border-radius: 15px; margin-bottom: 25px; border: 2px dashed var(--primary); text-align:center;">
+        <h2 id="activeName" style="margin:0; color:var(--primary);"></h2>
+        <p id="activeDetail" style="margin:10px 0; font-weight: bold;"></p>
     </div>
 
     <div id="mainOrderArea"></div>
-    <button onclick="addPerson()" style="width:100%; padding:20px; background:#10b981; color:white; border:none; border-radius:12px; font-weight:bold; cursor:pointer; font-size: 1.2rem; margin-bottom: 80px;">➕ 新增訂餐同學</button>
+    <button onclick="addPerson()" style="width:100%; padding:20px; background:var(--success); color:white; border:none; border-radius:15px; font-weight:bold; cursor:pointer; font-size: 1.3rem;">👤 新增訂餐同學 (開始點餐)</button>
 </div>
 
 <div class="footer">
-    <div>總計：<span id="totalItems">0</span> 份</div>
-    <div style="font-size:1.8rem; font-weight:bold;">應收總額：$<span id="totalPrice">0</span></div>
+    <div>總數量：<span id="totalItems">0</span> 份</div>
+    <div>全班應付總額：<span class="price-total">$<span id="totalPrice">0</span></span></div>
 </div>
-<button class="btn-copy" onclick="copyResult()">📋 複製 LINE 統計格式</button>
+<button class="btn-copy" onclick="copyResult()">📋 複製 LINE 統計摘要 (發送至班群)</button>
 
 <script>
-// --- 完整 22 家店家資料庫（含精確時間、電話、品項） ---
+// --- 22 家店地毯式全品項資料庫 (完整錄入) ---
 const stores = {
-    "得正 #基隆海大": { tel: "02-24621016", time: "11:00-21:00", off: "無", menu: {"春烏龍":35, "輕烏龍":35, "焙烏龍":35, "緋烏龍":35, "檸檬春烏龍":55, "珍珠奶茶":55, "芝士奶蓋春烏龍":65}, toppings: {"不加料":0, "焙烏龍茶凍":10, "黃金珍珠":10} },
-    "50嵐 #基隆深溪": { tel: "02-24683368", time: "10:00-22:00", off: "無", menu: {"四季春":30, "珍奶":50, "波霸奶茶":50, "紅茶拿鐵":60, "八冰茶":50}, toppings: {"不加料":0, "波霸":0, "珍珠":0} },
-    "拾汣茶屋 #基隆廟口": { tel: "02-24247778", time: "10:30-22:30", off: "無", menu: {"純茶":30, "愛玉公爵":45, "珍珠鮮奶茶":60, "粉粿桂花":45}, toppings: {"不加料":0, "粉粿":10, "珍珠":10} },
-    "可不可 #基隆深溪": { tel: "02-24659695", time: "10:00-22:00", off: "無", menu: {"熟成紅茶":35, "胭脂紅茶":40, "白玉歐蕾":60, "春芽綠茶":35}, toppings: {"不加料":0, "白玉":10} },
-    "迷客夏 #基隆廟口": { tel: "02-24261766", time: "10:00-21:30", off: "無", menu: {"珍珠鮮奶":75, "伯爵拿鐵":65, "大甲芋頭鮮奶":80}, toppings: {"不加料":0, "白玉珍珠":10} },
-    "龜記 #基隆店": { tel: "02-24258889", time: "11:00-22:00", off: "無", menu: {"紅柚翡翠":75, "蘋果紅萱":55, "三十四號紅茶":40}, toppings: {"不加料":0, "珍珠":10} },
-    "五桐號 #基隆仁三": { tel: "02-24283616", time: "11:00-21:30", off: "無", menu: {"五桐茶":35, "杏仁凍五桐茶":45, "老實人紅茶":35}, toppings: {"不加料":0, "綠茶凍":10} },
-    "有飲 #基隆廟口": { tel: "02-24258827", time: "11:00-21:00", off: "無", menu: {"旺旺來水果茶":65, "粉粿紅":40}, toppings: {"不加料":0, "粉粿":10} },
-    "蒟蒻屋": { tel: "02-24229000", time: "09:00-02:00", off: "無", menu: {"綜合蒟蒻":70, "綠豆湯":55, "豆花":45}, toppings: {"原味":0, "加珍珠":5, "加紅豆":10} },
-    "清心 #基隆海大": { tel: "02-24626266", time: "10:00-22:45", off: "無", menu: {"烏龍綠茶":30, "優多綠茶":45, "隱藏版":50}, toppings: {"不加料":0, "珍珠":10} },
-    "林香檸 #基隆店": { tel: "02-24270618", time: "11:00-21:00", off: "無", menu: {"招牌檸檬茶":55, "綠妍檸檬茶":55}, toppings: {"不加料":0} },
-    "廖媽媽麵飯館": { tel: "02-24680789", time: "11:00-20:30", off: "週日", menu: {"排骨飯":95, "雞腿飯":105, "滷肉飯":40}, toppings: {"正常":0, "加滷蛋":15, "加飯":10} },
-    "大碗牛肉麵": { tel: "02-24633396", time: "11:00-20:30", off: "週一", menu: {"牛肉麵":150, "乾麵":70}, toppings: {"加大":20, "不加料":0} },
-    "邱記炒麵": { tel: "02-24680335", time: "11:00-20:00", off: "週一", menu: {"什錦炒麵":85, "肉絲炒麵":75}, toppings: {"不加料":0, "加麵":10} },
-    "麥克麵線": { tel: "02-24236667", time: "06:00-18:00", off: "無", menu: {"全羹麵線":55, "魚酥麵線":55}, toppings: {"加大":15, "不加料":0} },
-    "豆乾包 #祥豐街": { tel: "02-24201711", time: "10:00-19:00", off: "週日", menu: {"豆乾包湯":50, "乾麵":35}, toppings: {"不加料":0} },
-    "美香齋滷味": { tel: "02-24263357", time: "11:00-23:00", off: "無", menu: {"滷味拼盤":100, "水餃(10顆)":60}, toppings: {"不加料":0} },
-    "Mr.Wish #基隆廟口": { tel: "02-24273456", time: "11:00-22:00", off: "無", menu: {"水果茶":60, "光果茶":65}, toppings: {"不加料":0, "珍珠":10} },
-    "Coco #基隆海洋": { tel: "02-24620586", time: "10:30-21:30", off: "無", menu: {"奶茶三兄弟":55, "百香雙響炮":50}, toppings: {"不加料":0} },
-    "Comebuy #新豐": { tel: "02-24695668", time: "10:00-22:00", off: "無", menu: {"海神":40, "蘋果冰茶":55}, toppings: {"不加料":0, "粉條":10} },
-    "鶴茶樓 #基隆忠一": { tel: "02-24265572", time: "10:00-22:00", off: "無", menu: {"鶴頂紅茶":35, "杏仁凍奶茶":65}, toppings: {"不加料":0} },
-    "水雲堂 #義二店": { tel: "02-24261227", time: "10:00-22:00", off: "無", menu: {"黑糖珍珠鮮奶":65, "純茶":30}, toppings: {"不加料":0} }
+    "50嵐 #基隆深溪": { 
+        tel: "02-24683368", time: "10:00-22:00", off: "無", 
+        ice: ["正常冰", "少冰", "微冰", "去冰", "常溫", "熱"],
+        sugar: ["正常甜", "9分甜", "8分甜", "7分甜", "半糖", "少糖", "微糖", "2分糖", "1分甜", "無糖"],
+        menu: {"阿薩姆紅茶":40,"茉莉綠茶":40,"四季春青茶":40,"黃金烏龍":40,"檸檬綠":60,"檸檬紅":60,"梅之綠":60,"8冰綠":60,"桔子綠":60,"養樂多綠":60,"鮮柚綠":75,"蜂蜜綠":60,"奶茶":60,"奶綠":60,"烏龍奶茶":60,"四季奶青":60,"黃金烏龍奶":60,"布丁奶茶":75,"波霸奶茶":60,"珍珠奶茶":60,"燕麥奶茶":60,"紅茶瑪奇朵":60,"綠茶瑪奇朵":60,"烏龍瑪奇朵":60,"四季瑪奇朵":60,"波霸紅茶拿鐵":70,"珍珠紅茶拿鐵":70,"燕麥紅茶拿鐵":70,"可可芭蕾":70,"阿華田":60,"冰淇淋紅茶":60,"芒果青":60,"波霸紅/綠/青/烏":50,"珍珠紅/綠/青/烏":50,"燕麥紅/綠/青/烏":50,"麵茶奶茶":75,"麵茶奶綠":75,"仙草奶凍":60}, 
+        toppings: {"不加料":0, "波霸":0, "珍珠":0, "波霸+珍珠":0, "布丁(2顆)":20, "仙草凍":10, "燕麥":10} 
+    },
+    "得正 #基隆海大": { 
+        tel: "02-24621016", time: "11:00-21:00", off: "無", 
+        ice: ["正常冰", "少冰", "微冰", "去冰", "完全去冰", "常溫", "溫", "熱"],
+        sugar: ["正常甜", "少糖", "半糖", "微糖", "二分糖", "無糖"],
+        menu: {"春烏龍":30,"輕烏龍":30,"焙烏龍":30,"緋烏龍":35,"紅茶":25,"綠茶":25,"檸檬春烏龍":55,"香橙春烏龍":60,"甘蔗春烏龍":60,"葡萄柚春烏龍":60,"百香果春烏龍":55,"優香鮮奶茶":60,"焙烏龍奶茶":50,"輕烏龍奶茶":50,"春烏龍奶茶":50,"緋烏龍奶茶":50,"烘吉奶茶":50,"紅茶鮮奶":55,"輕烏龍鮮奶":55,"焙烏龍鮮奶":55,"緋烏龍鮮奶":60,"珍珠奶茶":55,"黃金珍珠奶綠":55,"芝士奶蓋春烏龍":50,"芝士奶蓋焙烏龍":50,"芝士奶蓋緋烏龍":55,"芝士奶蓋紅茶":50,"芝士奶蓋綠茶":50,"酸莓緋烏龍":50,"抹茶鮮奶":65,"烘吉鮮奶":65}, 
+        toppings: {"不加料":0, "焙烏龍茶凍":10, "黃金珍珠":10, "芝士奶蓋":20} 
+    },
+    "鶴茶樓 #基隆忠一": { 
+        tel: "02-24265572", time: "10:00-22:00", off: "無", 
+        ice: ["正常","少冰","微冰","去冰","完全去冰","常溫","熱"],
+        sugar: ["正常","少糖","半糖","微糖","無糖"],
+        menu: {"鶴頂紅茶":35,"綺夢紅茶":40,"舶來紅茶":30,"藝伎紅茶":45,"桂香烏龍":35,"金萱青茶":30,"神農牛乳":65,"綺夢那堤":60,"地鍋那堤":60,"維多利亞那堤":65,"泰式奶茶":65,"杏仁凍奶茶":65,"鶴頂粉粿奶茶":60,"珍珠奶茶":60,"青檸蘭香綠":60,"荔枝紅茶":50,"黑糖珍珠奶茶":65,"冬瓜那堤":55,"復刻奶茶":50,"大武山拿鐵":65,"蒙太古拿鐵":65}, 
+        toppings: {"不加料":0, "杏仁凍":15, "茶凍":10, "鶴頂粉粿":15, "珍珠":10} 
+    },
+    "拾汣茶屋 #基隆廟口": { 
+        tel: "02-24247778", time: "10:30-22:30", off: "無", 
+        ice: ["正常","少冰","微冰","去冰","完全去冰","常溫"], sugar: ["正常","半糖","微糖","無糖"],
+        menu: {"愛玉公爵":45,"珍珠鮮奶茶":60,"純茶(綠/烏/青)":30,"鐵觀音":30,"粉粿桂花":45,"拾汣奶茶":45,"採蜜紅茶":35,"紅柚翠玉":55,"烏龍奶茶":45,"仙草乾茶":35,"冬瓜茶":30,"甘蔗青茶":55,"爆爆珠綠茶":55,"布丁奶茶":60,"紅豆湯":55,"珍珠醇奶茶":50,"歐蕾系列":60}, 
+        toppings: {"不加料":0, "粉粿":10, "珍珠":10, "愛玉":10, "爆爆珠":15, "布丁":15} 
+    },
+    "可不可 #基隆深溪": { 
+        tel: "02-24659695", time: "10:00-22:00", off: "無", 
+        ice: ["正常","少冰","微冰","去冰","完全去冰"], sugar: ["正常","少糖","半糖","微糖","無糖"],
+        menu: {"熟成紅茶":35,"麗春紅茶":35,"胭脂紅茶":40,"春芽綠茶":35,"春梅冰茶":50,"冷露歐蕾":55,"熟成歐蕾":55,"白玉歐蕾":60,"熟成奶茶":50,"麗春歐蕾":55,"胭脂那堤":60,"春芽那堤":55,"雪藏紅茶":55,"墨玉歐蕾":60,"金鑽鳳梨綠":60,"柚果紅茶":65,"橘果紅茶":65}, 
+        toppings: {"不加料":0, "白玉":10, "水玉":10} 
+    },
+    "迷客夏 #基隆廟口": { 
+        tel: "02-24261766", time: "10:00-21:30", off: "無", 
+        ice: ["正常","少冰","微冰","去冰"], sugar: ["正常","七分","半糖","三分","無糖"],
+        menu: {"珍珠鮮奶":75,"伯爵拿鐵":65,"大甲芋頭鮮奶":80,"青茶":30,"麥茶":30,"娜杯紅茶":35,"初露綠茶":30,"琥珀拿鐵":65,"焙茶拿鐵":65,"柳丁綠":65,"葡萄柚綠":65,"草莓鮮奶":80,"柳橙歐蕾":70,"決明大麥":30,"法芙娜可可":75,"養樂多綠":60,"香緹紅茶":40,"茉香綠茶":30}, 
+        toppings: {"不加料":0, "白玉珍珠":10, "仙草凍":10, "綠茶凍":10, "黃金珍珠":10, "脆啵啵":15} 
+    },
+    "龜記 #基隆店": { 
+        tel: "02-24258889", time: "11:00-22:00", off: "無", 
+        ice: ["正常","少冰","微冰","去冰"], sugar: ["正常","半糖","微糖","無糖"],
+        menu: {"紅柚翡翠":75,"蘋果紅萱":55,"三十四號紅茶":40,"翡翠綠茶":35,"三韻奶茶":55,"阿薩姆奶茶":55,"冬瓜鮮乳":65,"秀菊杯":65,"老欉檸檬綠":55,"冬瓜檸檬":50,"紅水烏龍":40,"鮮乳茶":65,"金桔檸檬":55,"雷夢藍調":60,"紅烏龍拿鐵":65,"黑木耳鮮乳":70}, 
+        toppings: {"不加料":0, "珍珠":10} 
+    },
+    "清心福全 #海大": { 
+        tel: "02-24626266", time: "10:00-22:45", off: "無", 
+        ice: ["正常","少冰","微冰","去冰"], sugar: ["正常","半糖","微糖","無糖"],
+        menu: {"烏龍綠茶":30,"優多綠茶":45,"隱藏版":50,"蜂蜜紅茶":50,"錫蘭紅茶":30,"特級綠茶":30,"珍珠奶茶":50,"冬瓜茶":30,"仙草凍奶茶":50,"梅子綠茶":45,"珍珠鮮奶茶":60,"布丁奶茶":60,"翡翠檸檬":50,"薑母茶":50,"冰淇淋紅茶":50,"情人茶":45,"椰果奶茶":45}, 
+        toppings: {"不加料":0, "珍珠":10, "椰果":10, "布丁":20, "仙草凍":10} 
+    },
+    "五桐號 #基隆仁三": { 
+        tel: "02-24283616", time: "11:00-21:30", off: "無", 
+        ice: ["正常","少冰","微冰","去冰"], sugar: ["正常","半糖","微糖","無糖"],
+        menu: {"五桐茶":35,"杏仁凍五桐茶":45,"綠茶凍五桐茶":45,"青茶凍五桐茶":45,"仙草凍奶茶":50,"老實人紅茶":35,"招牌奶茶":50,"最愛奶茶":50,"泰式奶茶":65,"荔枝冰茶":60,"玉堂春茶":35,"一把青":35,"茉莉綠茶":30,"蜜香紅茶":35,"五桐奶茶":50}, 
+        toppings: {"不加料":0, "綠茶凍":10, "小珍珠":10, "杏仁凍":15, "仙草凍":10, "多多":10} 
+    },
+    "有飲 #基隆廟口": { 
+        tel: "02-24258827", time: "11:00-21:00", off: "無", 
+        ice: ["正常","少冰","微冰","去冰"], sugar: ["正常","半糖","微糖","無糖"],
+        menu: {"旺旺來水果茶":65,"粉粿紅":40,"焦糖拿鐵":75,"柳橙綠茶":60,"憨吉奶霜":70,"炎夏芒果":75,"布丁奶茶":70,"經典紅茶":35,"四季春":35,"優酪乳綠茶":60,"奶茶":50,"珍珠鮮奶茶":65,"焙茶拿鐵":70,"金萱青茶":35,"古早味茶飲":35}, 
+        toppings: {"不加料":0, "粉粿":10, "珍珠":10, "布丁":15} 
+    },
+    "林香檸 #基隆店": { 
+        tel: "02-24270618", time: "11:00-21:00", off: "無", 
+        ice: ["正常","少冰","微冰","去冰"], sugar: ["正常","半糖","微糖","無糖"],
+        menu: {"招牌檸檬茶":55,"綠妍檸檬茶":55,"泰式檸檬茶":60,"手打檸檬綠":55,"玫瑰檸檬茶":60,"金鳳檸檬茶":60,"鴨屎香檸檬茶":65,"黑金檸檬茶":60,"檸檬紅茶":55,"鹹檸七":60,"雙拼檸檬茶":65}, 
+        toppings: {"不加料":0} 
+    },
+    "Mr.Wish #基隆廟口": { 
+        tel: "02-24273456", time: "11:00-22:00", off: "無", 
+        ice: ["正常","少冰","微冰","去冰"], sugar: ["正常","半糖","微糖","無糖"],
+        menu: {"水果茶":60,"光果茶":65,"珍珠奶茶":50,"愛文芒果冰沙":85,"草莓厚奶":80,"金鑽鳳梨綠":60,"野莓纖果飲":65,"白糖脆脆那堤":70,"甘蔗青茶":60,"冬瓜檸檬":50,"蜜桃果粒茶":65,"熟成紅茶":30,"茉香綠茶":30}, 
+        toppings: {"不加料":0, "珍珠":10, "椰果":10, "愛玉":10, "蘆薈":10} 
+    },
+    "Coco #基隆海洋": { 
+        tel: "02-24620586", time: "10:30-21:30", off: "無", 
+        ice: ["正常","少冰","微冰","去冰"], sugar: ["正常","半糖","微糖","無糖"],
+        menu: {"奶茶三兄弟":55,"百香雙響炮":50,"珍珠奶茶":45,"布丁奶茶":55,"莓果派對":60,"星空葡萄":75,"西谷米奶茶":50,"茉莉綠茶":35,"四季春":35,"莊園紅茶":35,"芋頭牛奶":70,"QQ奶茶":50,"檸檬綠茶":50,"巧克力歐蕾":55}, 
+        toppings: {"不加料":0, "珍珠":10, "布丁":15, "椰果":10, "西谷米":10} 
+    },
+    "Comebuy #新豐": { 
+        tel: "02-24695668", time: "10:00-22:00", off: "無", 
+        ice: ["正常","少冰","微冰","去冰"], sugar: ["正常","半糖","微糖","無糖"],
+        menu: {"海神":40,"蘋果冰茶":55,"荔枝玉露":55,"絕代雙Q奶茶":55,"纖美小紫蘇":50,"百香果搖果樂":55,"玩火":40,"錫蘭紅茶":35,"茉莉綠茶":35,"雙Q奶茶":55,"粉條奶茶":55,"烏龍奶茶":50,"玫瑰青茶":45,"檸檬冰沙":55}, 
+        toppings: {"不加料":0, "粉條":10, "珍珠":10, "椰果":10, "愛玉":10} 
+    },
+    "水雲堂 #義二店": { 
+        tel: "02-24261227", time: "10:00-22:00", off: "無", 
+        ice: ["正常","少冰","微冰","去冰"], sugar: ["正常","半糖","微糖","無糖"],
+        menu: {"黑糖珍珠鮮奶":65,"純茶":30,"水果茶":60,"沖繩黑糖奶茶":55,"芝士奶蓋紅茶":60,"金鑽鳳梨綠":60,"玫瑰拿鐵":65,"仙草奶凍":50,"芋頭鮮奶":75,"百香雙Q":55,"葡萄柚綠":60,"金桔檸檬":55,"黑糖拿鐵":65}, 
+        toppings: {"不加料":0, "珍珠":10, "椰果":10, "茶凍":10, "仙草":10} 
+    },
+    "蒟蒻屋": { 
+        tel: "02-24229000", time: "09:00-02:00", off: "無", 
+        ice: ["正常","去冰","溫","熱"], sugar: ["正常","半糖","無糖"],
+        menu: {"綜合蒟蒻":70,"綠豆湯":55,"紅豆湯":55,"豆花":45,"花生湯":55,"燒仙草":50,"綜合刨冰":65,"綠豆蒟蒻":60,"紅豆蒟蒻":60,"花生蒟蒻":60,"薏仁湯":55,"銀耳蓮子湯":70,"薏仁蒟蒻":60,"仙草凍":45,"黑糖水冰":35}, 
+        toppings: {"原味":0, "加珍珠":5, "加紅豆":10, "加煉乳":10, "加蒟蒻":10, "加花生":10, "加綠豆":10} 
+    },
+    "廖媽媽麵飯館": { 
+        tel: "02-24230398", time: "11:00-21:00", off: "週日", 
+        ice: ["無"], sugar: ["無"], 
+        menu: {"排骨飯":95,"雞腿飯":105,"滷肉飯":40,"扣肉飯":95,"炒麵":75,"什錦燴飯":95,"貢丸湯":30,"餛飩湯":40,"什錦湯":65,"豬肝湯":50,"榨菜肉絲麵":75,"排骨麵":95,"牛肉麵":150,"餛飩麵":75,"肉絲炒飯":80,"炸醬麵":65}, 
+        toppings: {"正常":0, "加滷蛋":15, "加飯":10, "加麵":10, "加貢丸":10} 
+    },
+    "大碗牛肉麵": { 
+        tel: "02-24633396", time: "11:00-20:30", off: "週一", 
+        ice: ["無"], sugar: ["無"], 
+        menu: {"牛肉麵":150,"半筋半肉麵":180,"牛肚麵":180,"三寶麵":200,"牛肉湯麵":90,"炸醬麵":70,"乾麵":70,"榨菜肉絲麵":80,"牛肉細粉":150,"牛肚細粉":180,"各式小菜":40,"燙青菜":40,"大份牛肉麵":180,"牛肉湯":120}, 
+        toppings: {"正常":0, "加大":20, "不加蔥":0, "加辣":0} 
+    },
+    "邱記炒麵": { 
+        tel: "02-24680335", time: "11:00-20:00", off: "週一", 
+        ice: ["無"], sugar: ["無"], 
+        menu: {"什錦炒麵":85,"肉絲炒麵":75,"牛肉炒麵":95,"肉絲蛋炒飯":80,"什錦燴飯":90,"肉絲燴飯":80,"炒烏龍":80,"什錦湯":60,"豬肝湯":50,"貢丸湯":30,"蛤蜊湯":50,"燙青菜":40,"牛肉燴飯":100,"炒青菜":60}, 
+        toppings: {"正常":0, "加麵/飯":10, "加蛋":10, "加辣":0} 
+    },
+    "麥克麵線": { 
+        tel: "02-24236667", time: "06:00-18:00", off: "無", 
+        ice: ["無"], sugar: ["無"], 
+        menu: {"全羹麵線":55,"魚酥麵線":55,"肉羹麵線":55,"大腸麵線":55,"帶帶麵線":65,"清麵線":40,"甜不辣":55,"大腸魚酥麵線":65,"綜合麵線":65,"肉羹":50,"魚酥羹":50}, 
+        toppings: {"正常":0, "加大":15, "多香菜":0, "不要香菜":0, "加辣":0} 
+    },
+    "豆乾包祥豐街": { 
+        tel: "02-24201711", time: "10:00-19:00", off: "週日", 
+        ice: ["無"], sugar: ["無"], 
+        menu: {"豆乾包湯":50,"乾麵":35,"魚丸湯":40,"冬粉湯":35,"綜合湯":55,"豆乾包一份":50,"冬粉加豆乾包":60,"乾米粉":35,"米粉湯":35}, 
+        toppings: {"不加料":0, "加麵":10, "加米粉":10} 
+    },
+    "美香齋滷味": { 
+        tel: "02-24263357", time: "11:00-23:00", off: "無", 
+        ice: ["無"], sugar: ["無"], 
+        menu: {"滷味拼盤":100,"綜合滷味":80,"水餃(10顆)":60,"乾拌麵":50,"酸辣湯":35,"滷肉飯":35,"燙青菜":40,"滷蛋":15,"青菜湯":30,"豆腐":20,"海帶":20}, 
+        toppings: {"不加料":0, "加辣":0, "不加酸菜":0} 
+    }
 };
 
-const iceLevels = ["正常冰", "少冰", "微冰", "去冰", "常溫", "熱"];
-const sugarLevels = ["正常甜", "9分甜", "8分甜", "半糖", "少糖", "微糖", "2分糖", "無糖"];
-
 let currentStore = "";
-let orders = JSON.parse(localStorage.getItem('ee_orders_v4')) || [];
+let orders = JSON.parse(localStorage.getItem('ee_master_final_v2')) || [];
 
 function init() {
     const selector = document.getElementById('storeSelector');
-    Object.keys(stores).forEach(name => {
+    Object.keys(stores).sort().forEach(name => {
         const s = stores[name];
-        const card = document.createElement('div');
-        card.className = 'store-card';
-        card.innerHTML = `
+        selector.innerHTML += `<div class="store-card" id="card-${name}" onclick="selectStore('${name}')">
             <h3>${name}</h3>
-            <p>📞 ${s.tel}</p>
-            <p>⏰ ${s.time}</p>
+            <p>📞 ${s.tel} | ⏰ ${s.time}</p>
             <p style="color:#ef4444; font-weight:bold;">🚫 公休: ${s.off}</p>
-            <span class="status-tag" id="st-${name}">檢測中</span>
-        `;
-        card.onclick = () => {
-            currentStore = name;
-            document.querySelectorAll('.store-card').forEach(c => c.classList.remove('active'));
-            card.classList.add('active');
-            document.getElementById('storeInfo').style.display = 'block';
-            document.getElementById('activeStoreName').innerText = name;
-            document.getElementById('activeStoreDetail').innerText = `電話：${s.tel} | 時間：${s.time} | 公休：${s.off}`;
-            render();
-        };
-        selector.appendChild(card);
-        checkStatus(name, s.time, s.off);
+        </div>`;
     });
     render();
 }
 
-function checkStatus(name, time, off) {
-    const el = document.getElementById(`st-${name}`);
-    const now = new Date();
-    const day = now.getDay(); // 0是週日
-    const weekMap = {"週一":1, "週二":2, "週三":3, "週四":4, "週五":5, "週六":6, "週日":0};
-    
-    if(off !== "無" && day === weekMap[off]) {
-        el.innerText = "今日公休"; el.style.background = "#fee2e2"; el.style.color = "#ef4444";
-        return;
-    }
-    
-    const [start, end] = time.split('-').map(t => {
-        const [h, m] = t.split(':').map(Number);
-        return h * 60 + m;
-    });
-    const cur = now.getHours() * 60 + now.getMinutes();
-    if (cur >= start && cur < end) {
-        el.innerText = "營業中"; el.style.background = "#dcfce7"; el.style.color = "#16a34a";
-    } else {
-        el.innerText = "休息中"; el.style.background = "#f1f5f9"; el.style.color = "#64748b";
-    }
+function selectStore(name) {
+    currentStore = name;
+    document.querySelectorAll('.store-card').forEach(c => c.classList.remove('active'));
+    document.getElementById(`card-${name}`).classList.add('active');
+    document.getElementById('storeActiveBox').style.display = 'block';
+    document.getElementById('activeName').innerText = name;
+    document.getElementById('activeDetail').innerText = `電話：${stores[name].tel} | 營業時間：${stores[name].time}`;
+    render();
 }
 
 function addPerson() {
-    const name = prompt("請輸入同學姓名：");
+    const name = prompt("請輸入訂餐人員姓名 (例如: 陳同學 或 王老師)：");
     if (!name) return;
     orders.push({ name, items: [{ drink: "", sugar: "無糖", ice: "去冰", topping: "不加料", price: 0 }], paid: 0 });
     save();
 }
 
-function updateOrder(pIdx, iIdx, field, val) {
+function update(pIdx, iIdx, field, val) {
     const it = orders[pIdx].items[iIdx];
     it[field] = val;
     if (currentStore && (field === 'drink' || field === 'topping')) {
@@ -156,72 +238,66 @@ function updateOrder(pIdx, iIdx, field, val) {
 }
 
 function save() {
-    localStorage.setItem('ee_orders_v4', JSON.stringify(orders));
+    localStorage.setItem('ee_master_final_v2', JSON.stringify(orders));
     render();
 }
 
 function render() {
     const container = document.getElementById('mainOrderArea');
     container.innerHTML = '';
-    let gPrice = 0, gCount = 0;
+    let totalP = 0, totalC = 0;
     const sData = stores[currentStore];
 
     orders.forEach((p, pIdx) => {
         let pSum = 0;
         const itemsHtml = p.items.map((it, iIdx) => {
-            pSum += it.price; gCount++;
-            let dOpts = `<option value="">-- 請選擇品項 --</option>`;
-            if(sData) Object.keys(sData.menu).forEach(d => dOpts += `<option value="${d}" ${it.drink===d?'selected':''}>${d} ($${sData.menu[d]})</option>`);
+            pSum += it.price; totalC++;
+            let dOpts = `<option value="">-- 請下拉選擇該店「全品項」菜單 --</option>`;
+            if(sData) Object.keys(sData.menu).sort().forEach(d => dOpts += `<option value="${d}" ${it.drink===d?'selected':''}>${d} ($${sData.menu[d]})</option>`);
             
-            let iceGrid = `<div class="spec-grid">` + iceLevels.map(l => `<div class="spec-item ${it.ice===l?'selected':''}" onclick="updateOrder(${pIdx},${iIdx},'ice','${l}')">${l}</div>`).join('') + `</div>`;
-            let sugarGrid = `<div class="spec-grid">` + sugarLevels.map(l => `<div class="spec-item ${it.sugar===l?'selected':''}" onclick="updateOrder(${pIdx},${iIdx},'sugar','${l}')">${l}</div>`).join('') + `</div>`;
+            let iceGrid = sData && sData.ice[0] !== "無" ? `<div class="spec-label">溫度 / 冰度</div><div class="spec-grid">${sData.ice.map(l => `<div class="spec-item ${it.ice===l?'selected':''}" onclick="update(${pIdx},${iIdx},'ice','${l}')">${l}</div>`).join('')}</div>` : "";
+            let sugarGrid = sData && sData.sugar[0] !== "無" ? `<div class="spec-label">糖度 / 甜度</div><div class="spec-grid">${sData.sugar.map(l => `<div class="spec-item ${it.sugar===l?'selected':''}" onclick="update(${pIdx},${iIdx},'sugar','${l}')">${l}</div>`).join('')}</div>` : "";
             
-            let tOpts = "";
-            if(sData) Object.keys(sData.toppings).forEach(t => tOpts += `<option value="${t}" ${it.topping===t?'selected':''}>+ ${t} (+$${sData.toppings[t]})</option>`);
-
-            return `
-                <div class="item-box">
-                    <select onchange="updateOrder(${pIdx},${iIdx},'drink',this.value)">${dOpts}</select>
-                    <div class="spec-label">冰度</div>${iceGrid}
-                    <div class="spec-label">甜度</div>${sugarGrid}
-                    <div class="spec-label">加料/備註</div>
-                    <select onchange="updateOrder(${pIdx},${iIdx},'topping',this.value)">${tOpts}</select>
-                    <div style="text-align:right; font-weight:bold; color:var(--primary); margin-top:10px;">小計：$${it.price}</div>
-                </div>`;
+            return `<div class="item-box">
+                <select onchange="update(${pIdx},${iIdx},'drink',this.value)">${dOpts}</select>
+                ${iceGrid} ${sugarGrid}
+                <div class="spec-label">加料 / 客製備註</div>
+                <select onchange="update(${pIdx},${iIdx},'topping',this.value)">${Object.keys(sData ? sData.toppings : {}).map(t=>`<option value="${t}" ${it.topping===t?'selected':''}>+${t} (+$${sData.toppings[t]})</option>`).join('')}</select>
+                <div style="text-align:right; font-weight:bold; color:var(--primary); margin-top:10px; font-size:1.1rem;">單項小計：$${it.price}</div>
+            </div>`;
         }).join('');
 
-        gPrice += pSum;
-        container.innerHTML += `
-            <div class="person-card">
-                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #f1f5f9; padding-bottom:12px; margin-bottom:15px;">
-                    <strong style="font-size:1.3rem;">👤 ${p.name}</strong> 
-                    <span style="color:var(--primary); font-weight:900; font-size:1.3rem;">個人總計：$${pSum}</span>
-                </div>
-                ${itemsHtml}
-                <button onclick="orders[${pIdx}].items.push({drink:'',sugar:'無糖',ice:'去冰',topping:'不加料',price:0});render()" style="color:blue; border:none; background:none; cursor:pointer; font-weight:bold; padding:10px 0;">+ 幫該同學加點第二份/杯</button>
-                <div style="margin-top:15px; background:#fff7ed; padding:15px; border-radius:10px; display:flex; justify-content:space-between; align-items:center; border:1px solid #ffedd5;">
-                    <span>收現金：<input type="number" style="width:70px; padding:8px; border-radius:6px; border:1px solid #ddd;" value="${p.paid}" oninput="orders[${pIdx}].paid=this.value;render()"></span>
-                    <span style="color:#c2410c; font-weight:bold; font-size:1.2rem;">應找錢：${p.paid-pSum > 0 ? p.paid-pSum : 0} 元</span>
-                    <button onclick="if(confirm('移除？')){orders.splice(${pIdx},1);save();}" style="color:#94a3b8; border:none; background:none; cursor:pointer; font-size:12px;">移除</button>
-                </div>
-            </div>`;
+        totalP += pSum;
+        container.innerHTML += `<div class="person-card">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2.5px solid #f1f5f9; padding-bottom:12px; margin-bottom:15px;">
+                <strong style="font-size:1.4rem;">👤 ${p.name}</strong> 
+                <span style="color:var(--primary); font-weight:900; font-size:1.5rem;">個人應收：$${pSum}</span>
+            </div>
+            ${itemsHtml}
+            <button onclick="orders[${pIdx}].items.push({drink:'',sugar:'無糖',ice:'去冰',topping:'不加料',price:0});render()" style="color:blue; background:none; border:none; cursor:pointer; font-weight:bold; padding:10px 0; font-size:1rem;">+ 為此人加點 (金額自動累加)</button>
+            <div style="margin-top:15px; background:#fff7ed; padding:15px; border-radius:12px; display:flex; justify-content:space-between; align-items:center; border:1.5px solid #ffedd5;">
+                <span>收現金：<input type="number" style="width:85px; padding:10px; border-radius:8px; border:1px solid #ddd;" value="${p.paid}" oninput="orders[${pIdx}].paid=this.value;render()"></span>
+                <span style="color:#c2410c; font-weight:bold; font-size:1.5rem;">應找錢：${p.paid-pSum > 0 ? p.paid-pSum : 0} 元</span>
+                <button onclick="if(confirm('確定移除此人資料？')){orders.splice(${pIdx},1);save();}" style="color:#94a3b8; border:none; background:none; cursor:pointer; font-size:13px;">[移除人員]</button>
+            </div>
+        </div>`;
     });
-    document.getElementById('totalPrice').innerText = gPrice;
-    document.getElementById('totalItems').innerText = gCount;
+    document.getElementById('totalPrice').innerText = totalP;
+    document.getElementById('totalItems').innerText = totalC;
 }
 
 function copyResult() {
-    let text = `📋 【電機科點餐統計摘要】\n📍 店家：${currentStore}\n------------------\n`;
+    let text = `📋 【電機科智慧點餐統計摘要】\n📍 店家：${currentStore}\n------------------\n`;
     orders.forEach(p => {
         let s = 0; text += `👤 ${p.name}：\n`;
         p.items.forEach(i => {
             text += `  ● ${i.drink} (${i.sugar}/${i.ice}) ${i.topping!=='不加料'?'+'+i.topping:''} $${i.price}\n`;
             s += i.price;
         });
-        text += `  💰 總計：$${s}\n------------------\n`;
+        text += `  💰 個人累加小計：$${s}\n------------------\n`;
     });
-    text += `🔥 全班應付總金額：$${document.getElementById('totalPrice').innerText}`;
-    navigator.clipboard.writeText(text); alert("統計格式已複製，請直接貼到 LINE！");
+    text += `🔥 全班點購總額：$${document.getElementById('totalPrice').innerText}`;
+    navigator.clipboard.writeText(text); alert("統計摘要已複製！可直接前往 LINE 群組貼上。");
 }
 
 window.onload = init;
