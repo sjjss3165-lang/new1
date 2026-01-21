@@ -5,26 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>電機科智慧點餐系統 Pro</title>
     <style>
-        body { font-family: "Microsoft JhengHei", sans-serif; background: #f1f5f9; color: #1e293b; margin: 0; padding: 20px; }
-        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-        h1 { color: #2563eb; text-align: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 15px; }
+        body { font-family: "PingFang TC", "Microsoft JhengHei", sans-serif; background: #f1f5f9; color: #334155; margin: 0; padding: 15px; }
+        .container { max-width: 1000px; margin: 0 auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        h1 { text-align: center; color: #1e3a8a; font-size: 1.5rem; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
         
-        /* 商店卡片區 */
-        .store-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; margin-bottom: 30px; }
-        .store-card { border: 1px solid #e2e8f0; padding: 15px; border-radius: 8px; transition: 0.2s; }
-        .store-card:hover { border-color: #2563eb; background: #f8fafc; }
-        .store-card h3 { margin: 0 0 10px 0; color: #1e3a8a; font-size: 1.1rem; }
-        .btn-menu { display: inline-block; width: 100%; padding: 8px; background: #2563eb; color: white; text-align: center; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 10px; }
+        /* 店家切換區 */
+        .store-selector { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; margin-bottom: 20px; }
+        .store-btn { padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; background: white; cursor: pointer; font-size: 0.9rem; font-weight: bold; transition: 0.2s; }
+        .store-btn.active { background: #2563eb; color: white; border-color: #2563eb; box-shadow: 0 0 10px rgba(37,99,235,0.3); }
 
-        /* 點餐表單 */
-        .order-panel { border-top: 3px solid #2563eb; padding-top: 20px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: left; }
-        th { background: #f8fafc; color: #64748b; font-size: 0.85rem; }
-        .item-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; background: #f9fafb; padding: 8px; border-radius: 6px; }
-        select, input { border: 1px solid #cbd5e1; padding: 6px; border-radius: 4px; outline: none; }
-        .total-area { margin-top: 30px; background: #1e3a8a; color: white; padding: 20px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; }
-        .btn-copy { width: 100%; padding: 15px; background: #1e293b; color: white; border: none; border-radius: 8px; font-size: 1.1rem; cursor: pointer; margin-top: 20px; }
+        /* 規格選單 (方塊格式) */
+        .spec-label { font-size: 0.8rem; color: #64748b; margin: 10px 0 5px 0; }
+        .spec-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-bottom: 10px; }
+        .spec-item { border: 1px solid #2563eb; color: #2563eb; background: white; padding: 6px; border-radius: 4px; cursor: pointer; font-size: 12px; text-align: center; white-space: nowrap; }
+        .spec-item.selected { background: #2563eb; color: white; }
+
+        /* 訂單內容 */
+        .person-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; margin-bottom: 15px; border-left: 5px solid #2563eb; }
+        .person-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .drink-select { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 1rem; margin-bottom: 5px; }
+        
+        .footer-total { position: sticky; bottom: 0; background: #1e293b; color: white; padding: 20px; border-radius: 10px 10px 0 0; display: flex; justify-content: space-between; align-items: center; margin-top: 30px; }
+        .btn-copy { width: 100%; padding: 15px; background: #3b82f6; color: white; border: none; font-size: 1.1rem; font-weight: bold; cursor: pointer; border-radius: 0 0 10px 10px; }
     </style>
 </head>
 <body>
@@ -32,148 +34,147 @@
 <div class="container">
     <h1>電機科智慧點餐系統 👩🏼‍🍳</h1>
     
-    <div class="store-grid" id="storeGrid"></div>
+    <div class="store-selector" id="storeSelector"></div>
 
-    <div class="order-panel">
-        <h2 id="currentStoreTitle">請點擊上方「菜單點餐」開始</h2>
-        <table id="orderTable">
-            <thead>
-                <tr>
-                    <th width="15%">訂購人</th>
-                    <th width="55%">品項明細 (依店家自動更新選單)</th>
-                    <th width="15%">個人累加</th>
-                    <th width="15%">收/找錢</th>
-                </tr>
-            </thead>
-            <tbody id="orderBody"></tbody>
-        </table>
-        <button onclick="addNewPerson()" style="margin-top:20px; padding:10px 20px; background:#10b981; color:white; border:none; border-radius:6px; cursor:pointer;">➕ 新增訂餐同學</button>
+    <div style="background: #eff6ff; padding: 12px; border-radius: 8px; margin-bottom: 20px; border: 1px dashed #2563eb;">
+        <strong>📍 目前店家：</strong><span id="activeStoreName" style="color:#2563eb; font-weight:bold;">請選擇店家</span>
+        <a id="extMenu" href="#" target="_blank" style="float:right; font-size:0.8rem; color:#64748b;">[開啟官方菜單連結]</a>
     </div>
 
-    <div class="total-area">
-        <div>總杯數：<span id="totalCount">0</span> 杯</div>
-        <div style="font-size: 1.5rem; font-weight: bold;">總金額：$<span id="finalTotal">0</span></div>
-    </div>
-    <button class="btn-copy" onclick="copyLine()">📋 複製 LINE 統計格式</button>
+    <div id="orderContainer"></div>
+    
+    <button onclick="addPerson()" style="width:100%; padding:12px; background:#10b981; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer; margin-top:10px;">➕ 新增訂餐同學</button>
 </div>
 
+<div class="footer-total">
+    <div>總數量：<span id="totalCount">0</span> 杯</div>
+    <div style="font-size:1.5rem; font-weight:bold;">總金額：$<span id="totalPrice">0</span></div>
+</div>
+<button class="btn-copy" onclick="copyResult()">📋 複製 LINE 統計格式</button>
+
 <script>
-// --- 完整 22 家店精準菜單與專屬加料 ---
-const storeConfig = {
-    "得正 #基隆海大": { link: "https://order.nidin.shop/menu/18739", menu: {"春茶":35, "焙烏龍":35, "檸檬春茶":50, "芝士奶蓋春茶":65}, toppings: {"不加料":0, "茶凍":10, "珍珠":10} },
-    "50嵐 基隆深溪店": { link: "https://order.nidin.shop/menu/21216", menu: {"四季春":30, "珍奶":50, "紅茶拿鐵":60, "冰淇淋紅茶":50}, toppings: {"不加料":0, "波霸":0, "珍珠":0, "布丁":20} },
-    "拾汣茶屋": { link: "https://www.19teahouse.com/", menu: {"愛玉公爵":45, "珍珠鮮奶茶":60, "純茶":30, "粉粿桂花":45}, toppings: {"不加料":0, "粉粿":10, "珍珠":10} },
-    "可不可": { link: "https://kebuke.com/menu/", menu: {"熟成紅茶":35, "熟成奶茶":50, "胭脂紅茶":40}, toppings: {"不加料":0, "白玉珍珠":10} },
-    "蒟蒻屋": { link: "https://drive.google.com/file/d/1T08WgpxufhYVOJ8sbfc7gvpthvoDaacY/view", menu: {"綠豆湯":55, "豆花":45, "綜合蒟蒻":70}, toppings: {"原味":0, "加珍珠":5, "加紅豆":10} },
-    "大碗牛肉麵": { link: "https://drive.google.com/file/d/12wii4UGfDTHYECO5ObXyS6qutY9qRcaX/view", menu: {"牛肉麵":150, "炸醬麵":70, "半筋半肉":180}, toppings: {"正常":0, "加大":20} },
-    "清心": { link: "http://chingshin.tw/", menu: {"烏龍綠":30, "隱藏版":50}, toppings: {"不加料":0, "珍珠":10, "椰果":10} },
-    "龜記": { link: "https://guiji.doteat.tw/menu", menu: {"紅柚翡翠":75, "蘋果紅萱":55}, toppings: {"不加料":0, "珍珠":10} },
-    "迷客夏": { link: "https://milksha.nidin.shop/menu/491", menu: {"珍珠鮮奶":70, "焙茶拿鐵":65}, toppings: {"不加料":0, "珍珠":10} },
-    "五桐號": { link: "https://www.wootea.com/menu/", menu: {"五桐茶":35, "老實人紅茶":35}, toppings: {"不加料":0, "小珍珠":10} },
-    "有飲": { link: "https://www.youindrink.com/pages/menu", menu: {"旺旺來水果茶":65, "粉粿紅":40}, toppings: {"不加料":0, "粉粿":10} },
-    "林香檸": { link: "https://www.lamheunglingoverseas.com/cz", menu: {"招牌檸檬茶":55, "綠妍檸檬茶":55}, toppings: {"不加料":0} },
-    "Mr.Wish": { link: "https://www.mr-wish.com/load_page/get_menu_page", menu: {"水果茶":60, "光果茶":60}, toppings: {"不加料":0} },
-    "Coco": { link: "https://coco-tea.nidin.shop/menu/21237", menu: {"奶茶三兄弟":55, "珍珠奶茶":45}, toppings: {"不加料":0} },
-    "Comebuy": { link: "https://drive.google.com/file/d/1Rq51uQuxEv4VDxwoB-hDczLhqECx9Gu2/view", menu: {"海神":40, "蘋果冰茶":50}, toppings: {"不加料":0, "粉條":10} },
-    "鶴茶樓": { link: "https://order.nidin.shop/menu/19710", menu: {"鶴頂紅茶":35, "綺夢那堤":60}, toppings: {"不加料":0, "茶凍":10} },
-    "水雲堂": { link: "https://www.drinkstore.com.tw/web/product/product.jsp", menu: {"黑糖珍珠鮮奶":65}, toppings: {"不加料":0} },
-    "麥克麵線": { link: "http://google.com/maps", menu: {"大腸麵線":55}, toppings: {"不加料":0} },
-    "豆乾包": { link: "https://drive.google.com/file/d/18VeBd_w6HFvBD321t7Iu-QaNfko5CljQ/view", menu: {"豆乾包":50}, toppings: {"不加料":0} },
-    "美香齋": { link: "https://drive.google.com/file/d/1pjCLx6xivI5e_Ud1zmMglOFFZtsjDFij/view", menu: {"滷味":100}, toppings: {"不加料":0} },
-    "邱記炒麵": { link: "https://drive.google.com/file/d/1zuEI_w-zwS9rIGRcekHsb_QXll1twyg3/view", menu: {"炒麵":80}, toppings: {"不加料":0} },
-    "廖媽媽": { link: "https://drive.google.com/file/d/1j_SjavYZbnJjJHCJNSzVQaAzf_1e5Km0/view", menu: {"排骨飯":90}, toppings: {"不加料":0, "加蛋":15} }
+// --- 22 家店全品項資料庫 (簡化範例，實際會包含所有品項) ---
+const stores = {
+    "得正": { link: "https://order.nidin.shop/menu/18739", menu: {"春茶": 35, "焙烏龍": 35, "檸檬春茶": 50, "芝士奶蓋春茶": 65, "珍珠奶茶": 55, "焙烏龍奶茶": 50}, toppings: {"不加料":0, "茶凍":10, "珍珠":10} },
+    "50嵐": { link: "https://order.nidin.shop/menu/21216", menu: {"四季春": 30, "珍奶": 50, "波霸奶茶": 50, "紅茶拿鐵": 60, "八冰茶": 50, "冰淇淋紅茶": 50}, toppings: {"不加料":0, "波霸":0, "珍珠":0, "布丁":20} },
+    "拾汣茶屋": { link: "https://www.19teahouse.com/", menu: {"愛玉公爵": 45, "珍珠鮮奶茶": 60, "純茶": 30, "粉粿桂花": 45}, toppings: {"不加料":0, "粉粿":10, "珍珠":10} },
+    "可不可": { link: "https://kebuke.com/menu/", menu: {"熟成紅茶": 35, "熟成奶茶": 50, "胭脂紅茶": 40}, toppings: {"不加料":0, "白玉": 10} },
+    "迷客夏": { link: "https://milksha.nidin.shop/menu/491", menu: {"珍珠鮮奶": 70, "焙茶拿鐵": 65, "青茶": 30}, toppings: {"不加料": 0, "珍珠": 10} },
+    "龜記": { link: "https://guiji.doteat.tw/menu", menu: {"紅柚翡翠": 75, "蘋果紅萱": 55}, toppings: {"不加料": 0, "珍珠": 10} },
+    "清心": { link: "http://chingshin.tw/", menu: {"烏龍綠": 30, "優多綠": 45, "隱藏版": 50}, toppings: {"不加料": 0, "珍珠": 10} },
+    "蒟蒻屋": { link: "https://drive.google.com/file/d/1T08WgpxufhYVOJ8sbfc7gvpthvoDaacY/view", menu: {"綠豆湯": 55, "綜合蒟蒻": 70, "豆花": 45}, toppings: {"原味":0, "加珍珠": 5, "加紅豆": 10} },
+    "廖媽媽": { link: "https://drive.google.com/file/d/1j_SjavYZbnJjJHCJNSzVQaAzf_1e5Km0/view", menu: {"排骨飯": 90, "雞腿飯": 100, "滷肉飯": 35}, toppings: {"正常": 0, "加滷蛋": 15} },
+    "大碗牛肉麵": { link: "https://drive.google.com/file/d/12wii4UGfDTHYECO5ObXyS6qutY9qRcaX/view", menu: {"牛肉麵": 150, "乾麵": 70}, toppings: {"正常":0, "加大":20} },
+    "邱記炒麵": { link: "https://drive.google.com/file/d/1zuEI_w-zwS9rIGRcekHsb_QXll1twyg3/view", menu: {"炒麵": 80, "貢丸湯": 30}, toppings: {"不加料":0} },
+    "麥克麵線": { link: "http://google.com/maps", menu: {"大腸麵線": 55, "魚酥麵線": 55}, toppings: {"加大":10, "不加料":0} },
+    "豆乾包": { link: "https://drive.google.com/file/d/18VeBd_w6HFvBD321t7Iu-QaNfko5CljQ/view", menu: {"豆乾包": 50}, toppings: {"不加料":0} },
+    "美香齋": { link: "https://drive.google.com/file/d/1pjCLx6xivI5e_Ud1zmMglOFFZtsjDFij/view", menu: {"滷味拼盤": 100}, toppings: {"不加料":0} },
+    "林香檸": { link: "https://www.lamheunglingoverseas.com/cz", menu: {"招牌檸檬茶": 55}, toppings: {"不加料":0} },
+    "Mr.Wish": { link: "https://www.mr-wish.com/load_page/get_menu_page", menu: {"水果茶": 60}, toppings: {"不加料":0} },
+    "Coco": { link: "https://coco-tea.nidin.shop/menu/21237", menu: {"奶茶三兄弟": 55}, toppings: {"不加料":0} },
+    "Comebuy": { link: "https://drive.google.com/file/d/1Rq51uQuxEv4VDxwoB-hDczLhqECx9Gu2/view", menu: {"海神": 40}, toppings: {"不加料":0} },
+    "鶴茶樓": { link: "https://order.nidin.shop/menu/19710", menu: {"鶴頂紅茶": 35}, toppings: {"不加料":0} },
+    "水雲堂": { link: "https://www.drinkstore.com.tw/web/product/product.jsp", menu: {"黑糖珍珠鮮奶": 65}, toppings: {"不加料":0} },
+    "五桐號": { link: "https://www.wootea.com/menu/", menu: {"五桐茶": 35}, toppings: {"不加料":0} },
+    "有飲": { link: "https://www.youindrink.com/pages/menu", menu: {"旺旺來水果茶": 65}, toppings: {"不加料":0} }
 };
 
-let orders = JSON.parse(localStorage.getItem('ee_orders')) || [];
-let activeStore = "";
+const iceLevels = ["正常冰", "少冰", "微冰", "去冰", "常溫", "熱"];
+const sugarLevels = ["正常甜", "半糖", "微糖", "二分糖", "無糖"];
+
+let currentStore = "";
+let orders = [];
 
 function init() {
-    const grid = document.getElementById('storeGrid');
-    Object.keys(storeConfig).forEach(name => {
-        grid.innerHTML += `<div class="store-card"><h3>${name}</h3><a href="#" class="btn-menu" onclick="selectStore('${name}')">菜單點餐</a></div>`;
+    const selector = document.getElementById('storeSelector');
+    Object.keys(stores).forEach(name => {
+        const btn = document.createElement('button');
+        btn.className = 'store-btn';
+        btn.innerText = name;
+        btn.onclick = () => selectStore(name, btn);
+        selector.appendChild(btn);
     });
+}
+
+function selectStore(name, btn) {
+    currentStore = name;
+    document.querySelectorAll('.store-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('activeStoreName').innerText = name;
+    document.getElementById('extMenu').href = stores[name].link;
     render();
 }
 
-function selectStore(name) {
-    activeStore = name;
-    document.getElementById('currentStoreTitle').innerText = `📍 正在訂購：${name}`;
-    window.open(storeConfig[name].link, '_blank');
-    render();
-}
-
-function addNewPerson() {
-    const name = prompt("輸入姓名：");
+function addPerson() {
+    const name = prompt("輸入訂餐人姓名：");
     if (!name) return;
-    orders.push({ name, items: [{ drink: "", sugar: "正常", ice: "正常", topping: "不加料", price: 0 }], paid: 0 });
-    save();
-}
-
-function addItem(pIdx) {
-    orders[pIdx].items.push({ drink: "", sugar: "正常", ice: "正常", topping: "不加料", price: 0 });
-    save();
+    orders.push({ name, items: [{ drink: "", ice: "去冰", sugar: "無糖", topping: "不加料", price: 0 }], paid: 0 });
+    render();
 }
 
 function update(pIdx, iIdx, field, val) {
-    const item = orders[pIdx].items[iIdx];
-    item[field] = val;
-    if (activeStore && (field === 'drink' || field === 'topping')) {
-        const s = storeConfig[activeStore];
-        item.price = (s.menu[item.drink] || 0) + (s.toppings[item.topping] || 0);
+    const it = orders[pIdx].items[iIdx];
+    it[field] = val;
+    if (currentStore && (field === 'drink' || field === 'topping')) {
+        const s = stores[currentStore];
+        it.price = (s.menu[it.drink] || 0) + (s.toppings[it.topping] || 0);
     }
-    save();
-}
-
-function save() {
-    localStorage.setItem('ee_orders', JSON.stringify(orders));
     render();
 }
 
 function render() {
-    const body = document.getElementById('orderBody');
-    body.innerHTML = '';
-    let gTotal = 0, gCount = 0;
-    const s = storeConfig[activeStore];
+    const container = document.getElementById('orderContainer');
+    container.innerHTML = '';
+    let totalP = 0, totalC = 0;
+    const sData = stores[currentStore];
 
     orders.forEach((p, pIdx) => {
         let pSum = 0;
         const itemsHtml = p.items.map((it, iIdx) => {
-            pSum += it.price; gCount++;
-            let dOpts = `<option value="">選品項...</option>`;
-            if(s) Object.keys(s.menu).forEach(d => dOpts += `<option value="${d}" ${it.drink===d?'selected':''}>${d}($${s.menu[d]})</option>`);
+            pSum += it.price; totalC++;
+            let dOpts = `<option value="">-- 請選擇品項 --</option>`;
+            if(sData) Object.keys(sData.menu).forEach(d => dOpts += `<option value="${d}" ${it.drink===d?'selected':''}>${d} ($${sData.menu[d]})</option>`);
+            
             let tOpts = "";
-            if(s) Object.keys(s.toppings).forEach(t => tOpts += `<option value="${t}" ${it.topping===t?'selected':''}>+${t}($${s.toppings[t]})</option>`);
+            if(sData) Object.keys(sData.toppings).forEach(t => tOpts += `<option value="${t}" ${it.topping===t?'selected':''}>+ ${t} (+$${sData.toppings[t]})</option>`);
 
-            return `<div class="item-row">
-                <select onchange="update(${pIdx},${iIdx},'drink',this.value)">${dOpts}</select>
-                <select onchange="update(${pIdx},${iIdx},'sugar',this.value)">${["正常","半糖","無糖"].map(x=>`<option ${it.sugar===x?'selected':''}>${x}</option>`).join('')}</select>
-                <select onchange="update(${pIdx},${iIdx},'ice',this.value)">${["正常","少冰","去冰"].map(x=>`<option ${it.ice===x?'selected':''}>${x}</option>`).join('')}</select>
-                <select onchange="update(${pIdx},${iIdx},'topping',this.value)">${tOpts}</select>
-                <strong>$${it.price}</strong>
-            </div>`;
+            return `
+                <div style="background:white; border:1px solid #cbd5e1; padding:10px; border-radius:6px; margin-bottom:10px;">
+                    <select class="drink-select" onchange="update(${pIdx},${iIdx},'drink',this.value)">${dOpts}</select>
+                    <div class="spec-label">冰度</div>
+                    <div class="spec-grid">${iceLevels.map(l => `<div class="spec-item ${it.ice===l?'selected':''}" onclick="update(${pIdx},${iIdx},'ice','${l}')">${l}</div>`).join('')}</div>
+                    <div class="spec-label">甜度</div>
+                    <div class="spec-grid">${sugarLevels.map(l => `<div class="spec-item ${it.sugar===l?'selected':''}" onclick="update(${pIdx},${iIdx},'sugar','${l}')">${l}</div>`).join('')}</div>
+                    <div class="spec-label">加料</div>
+                    <select class="drink-select" onchange="update(${pIdx},${iIdx},'topping',this.value)">${tOpts}</select>
+                    <div style="text-align:right; font-weight:bold; color:#2563eb;">小計: $${it.price}</div>
+                </div>`;
         }).join('');
 
-        gTotal += pSum;
-        body.innerHTML += `<tr>
-            <td><strong>${p.name}</strong></td>
-            <td>${itemsHtml} <button onclick="addItem(${pIdx})" style="color:blue;border:none;background:none;cursor:pointer;">+ 加點</button></td>
-            <td><span style="font-weight:bold;color:blue;">$${pSum}</span></td>
-            <td>收:<input type="number" style="width:45px" value="${p.paid}" oninput="orders[${pIdx}].paid=this.value;save()">找:${p.paid-pSum>0?p.paid-pSum:0}</td>
-        </tr>`;
+        totalP += pSum;
+        container.innerHTML += `
+            <div class="person-card">
+                <div class="person-header"><strong>👤 ${p.name}</strong> <span style="color:blue;">應付: $${pSum}</span></div>
+                ${itemsHtml}
+                <button onclick="orders[${pIdx}].items.push({drink:'',ice:'去冰',sugar:'無糖',topping:'不加料',price:0});render()" style="color:blue; background:none; border:none; cursor:pointer;">+ 幫他加點品項</button>
+                <div style="margin-top:10px; border-top:1px solid #ddd; padding-top:10px;">
+                    收: <input type="number" style="width:50px" value="${p.paid}" oninput="orders[${pIdx}].paid=this.value;render()"> 找: ${p.paid-pSum > 0 ? p.paid-pSum : 0}
+                </div>
+            </div>`;
     });
-    document.getElementById('finalTotal').innerText = gTotal;
-    document.getElementById('totalCount').innerText = gCount;
+    document.getElementById('totalPrice').innerText = totalP;
+    document.getElementById('totalCount').innerText = totalC;
 }
 
-function copyLine() {
-    let t = `📋 【電機科點餐】\n📍 店家：${activeStore}\n`;
+function copyResult() {
+    let text = `📋 【電機科智慧點餐】\n📍 店家：${currentStore}\n`;
     orders.forEach(p => {
-        let s = 0; t += `👤 ${p.name}：\n`;
-        p.items.forEach(i => { t += `  - ${i.drink}(${i.sugar}/${i.ice})${i.topping!=='不加料'?'+'+i.topping:''} $${i.price}\n`; s+=i.price; });
-        t += `  💰 小計：$${s}\n`;
+        let s = 0; text += `👤 ${p.name}：\n`;
+        p.items.forEach(i => { text += `  - ${i.drink} (${i.sugar}/${i.ice}) ${i.topping!=='不加料'?'+'+i.topping:''} $${i.price}\n`; s+=i.price; });
+        text += `  💰 個人總計：$${s}\n`;
     });
-    t += `\n🔥 總計：$${document.getElementById('finalTotal').innerText}`;
-    navigator.clipboard.writeText(t); alert("已複製！");
+    text += `\n🔥 全班總金額：$${document.getElementById('totalPrice').innerText}`;
+    navigator.clipboard.writeText(text); alert("統計格式已複製到剪貼簿！");
 }
 
 window.onload = init;
