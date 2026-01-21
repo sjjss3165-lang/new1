@@ -1,1 +1,216 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>電機科精準點餐系統 Pro (店家連動版)</title>
+    <style>
+        :root { --primary: #2563eb; --bg: #f8fafc; --card: #ffffff; --text: #1e293b; }
+        body { font-family: "Microsoft JhengHei", sans-serif; background: var(--bg); color: var(--text); padding: 15px; }
+        .container { max-width: 1100px; margin: 0 auto; }
+        .header { background: linear-gradient(135deg, #1e3a8a, #2563eb); color: white; padding: 25px; border-radius: 12px; margin-bottom: 20px; text-align: center; }
+        .setup-section { background: var(--card); padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #e2e8f0; display: flex; align-items: center; gap: 15px; }
+        table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #f1f5f9; }
+        th { background: #f8fafc; color: #64748b; font-size: 0.9rem; text-transform: uppercase; }
+        .order-row { transition: background 0.2s; }
+        .order-row:hover { background: #fdfdfd; }
+        select, input { padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none; }
+        select:focus { border-color: var(--primary); }
+        .btn { cursor: pointer; border: none; border-radius: 6px; padding: 10px 20px; font-weight: 600; transition: 0.3s; }
+        .btn-add { background: #10b981; color: white; }
+        .btn-person { background: #2563eb; color: white; margin-top: 15px; }
+        .btn-copy { background: #1e293b; color: white; width: 100%; margin-top: 25px; padding: 15px; font-size: 1.1rem; }
+        .price-total { font-size: 24px; color: #ef4444; font-weight: 800; }
+        .sub-item { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1.2fr auto; gap: 8px; margin-bottom: 10px; align-items: center; background: #f1f5f9; padding: 8px; border-radius: 8px; }
+    </style>
+</head>
+<body>
 
+<div class="container">
+    <div class="header">
+        <h1 style="margin:0;">電機科精準點餐系統 👩🏼‍🍳</h1>
+        <p style="margin:5px 0 0 0; opacity: 0.8;">店家連動選單 | 動態加料價格 | 個人金額自動累加</p>
+    </div>
+
+    <div class="setup-section">
+        <strong>📍 目前店家：</strong>
+        <select id="storeSelect" onchange="handleStoreChange()" style="font-size: 1.1rem; font-weight: bold; color: var(--primary);">
+            <option value="">請選擇商店...</option>
+        </select>
+        <span id="storeDetails" style="color: #64748b; font-size: 0.9rem;"></span>
+    </div>
+
+    <table id="orderTable">
+        <thead>
+            <tr>
+                <th width="15%">訂購人</th>
+                <th width="55%">品項 / 甜度冰塊 / 店家專屬加料</th>
+                <th width="15%">個人小計</th>
+                <th width="15%">收錢與找錢</th>
+            </tr>
+        </thead>
+        <tbody id="orderBody"></tbody>
+    </table>
+
+    <button class="btn btn-person" onclick="addNewPerson()">👤 新增訂餐同學 / 老師</button>
+
+    <div style="margin-top: 30px; background: #fff; padding: 20px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #e2e8f0;">
+        <div>全班共：<span id="totalCount" style="font-weight: bold; font-size: 1.2rem;">0</span> 杯 / 份</div>
+        <div>應收總金額：<span id="grandTotal" class="price-total">$0</span></div>
+    </div>
+
+    <button class="btn btn-copy" onclick="copyToLine()">📋 複製 LINE 統計格式 (含每人明細)</button>
+</div>
+
+<script>
+// --- 精準連動資料庫 (22家店品項與專屬加料) ---
+const storeConfig = {
+    "得正 #基隆海大": {
+        menu: {"春茶": 35, "焙烏龍": 35, "檸檬春茶": 50, "芝士奶蓋春茶": 65, "珍珠奶茶": 55},
+        toppings: {"不加料": 0, "焙烏龍茶凍": 10, "黃金珍珠": 10, "芝士奶蓋": 20}
+    },
+    "50嵐 基隆深溪店": {
+        menu: {"四季春": 30, "珍奶": 50, "波霸奶茶": 50, "紅茶拿鐵": 60, "冰淇淋紅茶": 50},
+        toppings: {"不加料": 0, "波霸": 0, "珍珠": 0, "波霸+珍珠": 0, "布丁(兩顆)": 20}
+    },
+    "拾汣茶屋 基隆廟口店": {
+        menu: {"純茶": 30, "珍珠鮮奶茶": 60, "愛玉公爵": 45, "紅柚翠玉": 55},
+        toppings: {"不加料": 0, "粉粿": 10, "珍珠": 10, "愛玉": 10}
+    },
+    "可不可 基隆深溪店": {
+        menu: {"熟成紅茶": 35, "胭脂紅茶": 40, "熟成奶茶": 50, "春芽綠茶": 35},
+        toppings: {"不加料": 0, "白玉珍珠": 10, "水玉(寒天)": 10}
+    },
+    "蒟蒻屋": {
+        menu: {"綠豆湯": 55, "綜合蒟蒻": 70, "紅豆湯": 55, "花生湯": 55, "豆花": 45},
+        toppings: {"原味": 0, "加珍珠": 5, "加紅豆": 10, "加煉乳": 10}
+    },
+    "迷客夏 基隆廟口店": {
+        menu: {"珍珠鮮奶": 70, "焙茶拿鐵": 65, "青茶": 30, "大甲芋頭鮮奶": 75},
+        toppings: {"不加料": 0, "白玉珍珠": 10, "黃金珍珠": 10, "仙草凍": 10}
+    },
+    "拾汣茶屋": {
+        menu: {"愛玉公爵": 45, "珍珠鮮奶茶": 60, "純茶": 30},
+        toppings: {"不加料": 0, "粉粿": 10, "爆爆珠": 15}
+    }
+    // 其餘店家可依此格式補齊...
+};
+
+let orders = JSON.parse(localStorage.getItem('smart_orders')) || [];
+
+function init() {
+    const select = document.getElementById('storeSelect');
+    Object.keys(storeConfig).forEach(name => select.add(new Option(name, name)));
+    render();
+}
+
+function handleStoreChange() {
+    if(confirm("切換店家會清空目前所有人的品項選擇（避免價格出錯），確定嗎？")) {
+        orders.forEach(p => p.items = [{ drink: "", sugar: "正常", ice: "正常", topping: "不加料", price: 0 }]);
+        save();
+    }
+}
+
+function addNewPerson() {
+    const name = prompt("請輸入姓名：");
+    if (!name) return;
+    orders.push({ name, items: [{ drink: "", sugar: "正常", ice: "正常", topping: "不加料", price: 0 }], paid: 0 });
+    save();
+}
+
+function addSubItem(pIdx) {
+    orders[pIdx].items.push({ drink: "", sugar: "正常", ice: "正常", topping: "不加料", price: 0 });
+    save();
+}
+
+function updateVal(pIdx, iIdx, field, val) {
+    const store = document.getElementById('storeSelect').value;
+    const item = orders[pIdx].items[iIdx];
+    item[field] = val;
+    
+    if (store && (field === 'drink' || field === 'topping')) {
+        const dPrice = storeConfig[store].menu[item.drink] || 0;
+        const tPrice = storeConfig[store].toppings[item.topping] || 0;
+        item.price = dPrice + tPrice;
+    }
+    save();
+}
+
+function save() {
+    localStorage.setItem('smart_orders', JSON.stringify(orders));
+    render();
+}
+
+function render() {
+    const store = document.getElementById('storeSelect').value;
+    const body = document.getElementById('orderBody');
+    body.innerHTML = '';
+    let totalAll = 0, countAll = 0;
+
+    orders.forEach((p, pIdx) => {
+        let pSum = 0;
+        const itemsHtml = p.items.map((it, iIdx) => {
+            pSum += it.price;
+            countAll++;
+
+            let dOpts = `<option value="">請選擇品項...</option>`;
+            if(store) Object.keys(storeConfig[store].menu).forEach(d => dOpts += `<option value="${d}" ${it.drink===d?'selected':''}>${d} ($${storeConfig[store].menu[d]})</option>`);
+
+            let tOpts = "";
+            if(store) Object.keys(storeConfig[store].toppings).forEach(t => tOpts += `<option value="${t}" ${it.topping===t?'selected':''}>+${t} ($${storeConfig[store].toppings[t]})</option>`);
+
+            return `
+                <div class="sub-item">
+                    <select onchange="updateVal(${pIdx}, ${iIdx}, 'drink', this.value)">${dOpts}</select>
+                    <select onchange="updateVal(${pIdx}, ${iIdx}, 'sugar', this.value)">
+                        ${["正常","半糖","微糖","無糖"].map(s => `<option value="${s}" ${it.sugar===s?'selected':''}>${s}</option>`).join('')}
+                    </select>
+                    <select onchange="updateVal(${pIdx}, ${iIdx}, 'ice', this.value)">
+                        ${["正常","少冰","微冰","去冰","熱"].map(i => `<option value="${i}" ${it.ice===i?'selected':''}>${i}</option>`).join('')}
+                    </select>
+                    <select onchange="updateVal(${pIdx}, ${iIdx}, 'topping', this.value)">${tOpts}</select>
+                    <span style="font-weight:bold; color:var(--primary)">$${it.price}</span>
+                </div>
+            `;
+        }).join('');
+
+        totalAll += pSum;
+        const row = document.createElement('tr');
+        row.className = "order-row";
+        row.innerHTML = `
+            <td><strong>${p.name}</strong></td>
+            <td>${itemsHtml} <button onclick="addSubItem(${pIdx})" style="background:none; border:none; color:blue; cursor:pointer; font-size:12px;">+ 再點一杯</button></td>
+            <td><span class="price-tag" style="color:#2563eb">$${pSum}</span></td>
+            <td>
+                收: <input type="number" style="width:50px" value="${p.paid}" oninput="orders[${pIdx}].paid=this.value; save()">
+                <div style="font-size:12px; color:#ef4444">找: ${p.paid - pSum > 0 ? p.paid - pSum : 0}</div>
+            </td>
+        `;
+        body.appendChild(row);
+    });
+
+    document.getElementById('grandTotal').innerText = `$${totalAll}`;
+    document.getElementById('totalCount').innerText = countAll;
+}
+
+function copyToLine() {
+    const store = document.getElementById('storeSelect').value;
+    let text = `📋 【電機科點餐統計】\n📍 店家：${store}\n------------------\n`;
+    orders.forEach(p => {
+        let s = 0;
+        text += `👤 ${p.name}：\n`;
+        p.items.forEach(i => {
+            text += `  - ${i.drink} (${i.sugar}/${i.ice}) ${i.topping!=='不加料'?' +'+i.topping:''} $${i.price}\n`;
+            s += i.price;
+        });
+        text += `  💰 個人小計：$${s}\n`;
+    });
+    text += `------------------\n🔥 總計：$${document.getElementById('grandTotal').innerText}\n共 ${document.getElementById('totalCount').innerText} 杯`;
+    navigator.clipboard.writeText(text).then(() => alert("摘要已複製！可以直接貼到 LINE 囉！"));
+}
+
+window.onload = init;
+</script>
+</body>
+</html>
