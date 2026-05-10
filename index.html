@@ -1,226 +1,92 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>電機科智慧點餐系統 - 聯網完全體</title>
-    <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <style>
-        :root { --primary-cyan: #0891b2; --primary-purple: #7e22ce; --bg-light: #f8fafc; }
-        body { font-family: "PingFang TC", "Microsoft JhengHei", sans-serif; background-color: var(--bg-light); margin: 0; padding: 10px; color: #1e293b; }
-        .container { max-width: 1200px; margin: 0 auto; padding-bottom: 80px; }
-        h1 { text-align: center; font-weight: 900; margin: 20px 0; }
-        .store-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; margin-bottom: 25px; }
-        .store-card { padding: 12px; border: 2px solid #e2e8f0; border-radius: 12px; background: #fff; cursor: pointer; text-align: center; font-size: 0.9rem; }
-        .store-card.active { border-color: var(--primary-purple); background: #fdf4ff; border-width: 3px; }
-        .data-stats-box { background: #fff; border: 2.5px solid var(--primary-purple); border-radius: 25px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
-        .main-flex { display: flex; flex-wrap: wrap; gap: 20px; }
-        .control-panel { flex: 1; min-width: 300px; background: #f1f5f9; padding: 25px; border-radius: 20px; }
-        .display-panel { flex: 2; min-width: 300px; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
-        .stats-list-card { background: white; border: 1px solid #ddd; padding: 15px; border-radius: 12px; position: relative; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        select, input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #cbd5e1; margin-bottom: 10px; background: white; font-size: 1rem; box-sizing: border-box; }
-        .custom-input-group { background: #e2e8f0; padding: 10px; border-radius: 10px; margin-bottom: 15px; border: 1px dashed #64748b; }
-        .total-banner { color: #fff; font-size: 1.8rem; font-weight: 900; text-align: center; margin-top: 20px; background: #000; padding: 15px; border-radius: 15px; }
-        .qr-section { text-align: center; margin-top: 40px; padding: 20px; border: 2px dashed #ccc; border-radius: 20px; background: #fff; }
-        #hostOnlyControls { margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 15px; }
-        .footer-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: #1e293b; color: white; padding: 15px; display: flex; justify-content: space-around; align-items: center; z-index: 1000; }
-        .notice { font-size: 0.85rem; color: #ef4444; margin-bottom: 10px; font-weight: bold; }
-    </style>
+    <title>老闆管理後台</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 </head>
-<body>
-
-<div class="container">
-    <h1>電機科智慧點餐統計系統 🎩</h1>
-
-    <div id="hostOnlyControls">
-        <p style="font-weight:bold; color:var(--primary-purple);">🛠️ 主機控制端：請選定今日店家 (手機端將自動同步菜單)</p>
-        <div class="store-grid" id="storeSelector"></div>
-    </div>
-
-    <div class="data-stats-box">
-        <div class="main-flex">
-            <div class="control-panel">
-                <h3 id="targetStoreTitle" style="color:var(--primary-cyan); margin-top:0;">同步資料中...</h3>
-                <p class="notice">💡 飲料備註：若選單無您的品項，請點最下方「自行輸入」</p>
-                
-                <label>人員選擇</label>
-                <select id="personSelect" onchange="toggleManual('manualName', this.value === '其他')">
-                    <option value="詩屏老師">詩屏老師</option><option value="岳霖老師">岳霖老師</option>
-                    <option value="雅婷老師">雅婷老師</option><option value="主任">主任</option>
-                    <option value="強哥">強哥</option><option value="助教">助教</option>
-                    <option value="其他">其他 (自行輸入)</option>
-                </select>
-                <input type="text" id="manualName" placeholder="請輸入姓名" style="display:none;">
-
-                <label>品項選擇</label>
-                <select id="itemSelect" onchange="toggleManual('customItemBox', this.value === 'CUSTOM')"></select>
-                <div id="customItemBox" class="custom-input-group" style="display:none;">
-                    <input type="text" id="customItemName" placeholder="品項名稱">
-                    <input type="number" id="customItemPrice" placeholder="價格 (數字)">
-                </div>
-
-                <label>糖冰 / 加料 / 規格</label>
-                <select id="toppingSelect" onchange="toggleManual('customTopBox', this.value === 'CUSTOM')"></select>
-                <div id="customTopBox" class="custom-input-group" style="display:none;">
-                    <input type="text" id="customTopName" placeholder="規格備註 (如:去冰無糖)">
-                    <input type="number" id="customTopPrice" placeholder="加價(不加價填0)">
-                </div>
-
-                <button style="width:100%; padding:18px; background:var(--primary-cyan); color:white; border:none; border-radius:12px; font-weight:bold; cursor:pointer;" onclick="sendOrder()">🚀 送出點餐 (即時更新主螢幕)</button>
+<body class="bg-secondary text-white">
+    <div class="container py-4">
+        <h2 class="mb-4">極星咖啡 - 管理後台</h2>
+        
+        <div class="row">
+            <div class="col-md-7">
+                <h4>即時訂單牆</h4>
+                <div id="order-wall" class="row"></div>
             </div>
-            <div class="display-panel" id="orderDisplay"></div>
+
+            <div class="col-md-5">
+                <div class="card text-dark p-3">
+                    <h4>今日銷售統計</h4>
+                    <ul id="stats-list" class="list-group"></ul>
+                    <hr>
+                    <h5>今日總營收: $<span id="daily-revenue">0</span></h5>
+                    <button class="btn btn-danger mt-3" onclick="resetDay()">結帳並清空數據</button>
+                </div>
+            </div>
         </div>
-        <div class="total-banner">全班總金額：$<span id="totalPrice">0</span></div>
     </div>
-
-    <div class="qr-section" id="qrSection">
-        <h3>📱 手機點餐入口</h3>
-        <div id="qrcode" style="display: flex; justify-content: center;"></div>
-        <p style="font-size:0.8rem; color:#666; margin-top:10px;">讓同學掃描後，手機將鎖定您選定的店家</p>
-    </div>
-</div>
-
-<div class="footer-bar">
-    <button style="background:var(--primary-purple); color:white; border:none; padding:10px 20px; border-radius:8px; font-weight:bold;" onclick="copyLine()">📋 複製 LINE 統計</button>
-    <button style="background:#ef4444; color:white; border:none; padding:10px 20px; border-radius:8px; font-weight:bold;" onclick="clearAll()">⚠️ 清空重整</button>
-</div>
 
 <script>
-// --- 🔥 Firebase 核心配置 (已修正 databaseURL) ---
-const firebaseConfig = {
-  apiKey: "AIzaSyC5kL_EtZ5njzrVF91_AX5GlqZDm7Y4gkg",
-  authDomain: "bvjvj-a2b27.firebaseapp.com",
-  databaseURL: "https://bvjvj-a2b27-default-rtdb.firebaseio.com", 
-  projectId: "bvjvj-a2b27",
-  storageBucket: "bvjvj-a2b27.firebasestorage.app",
-  messagingSenderId: "5684762832",
-  appId: "1:5684762832:web:e324f0c906e4b0313526d5",
-  measurementId: "G-1XDKY396FP"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+    const config = { databaseURL: "你的_FIREBASE_URL" };
+    firebase.initializeApp(config);
+    const db = firebase.database();
 
-// --- 22 家店地毯式全品項數據庫 ---
-const storesData = {
-    "50嵐 #基隆深溪": { menu: {"阿薩姆紅茶":40,"茉莉綠茶":40,"四季春青茶":40,"黃金烏龍":40,"檸檬紅":60,"8冰綠":60,"養樂多綠":60,"奶茶":60,"烏龍奶茶":60,"布丁奶茶":75,"波霸奶茶":60,"珍珠奶茶":60,"燕麥奶茶":60,"紅茶瑪奇朵":60,"波霸紅茶拿鐵":70,"冰淇淋紅茶":60,"麵茶奶茶":75,"仙草奶凍":60}, toppings: {"正常糖冰":0,"半糖":0,"微糖":0,"無糖":0,"去冰":0,"布丁(2顆)+20":20,"仙草凍+10":10,"燕麥+10":10} },
-    "得正 #基隆海大": { menu: {"春烏龍":30,"輕烏龍":30,"焙烏龍":30,"緋烏龍":35,"檸檬春烏龍":55,"優香鮮奶茶":60,"焙烏龍奶茶":50,"紅茶鮮奶":55,"珍珠奶茶":55,"芝士奶蓋春烏龍":50,"抹茶鮮奶":65}, toppings: {"正常":0,"完全去冰":0,"常溫":0,"溫飲":0,"茶凍+10":10,"黃金珍珠+10":10,"芝士奶蓋+20":20} },
-    "廖媽媽麵飯館-新豐店": { menu: {"打拋豬炒飯":120,"揚州炒飯":105,"青椒牛肉炒飯":105,"蝦仁炒飯":105,"鳳梨炒飯":105,"媽媽炒飯":95,"火腿炒飯":90,"肉絲炒飯":90,"和風親子丼":125,"麻婆豆腐燴飯":115,"海鮮燴飯":120,"蕃茄滑蛋燴飯":120,"青椒牛肉燴飯":105,"滑蛋牛肉燴飯":110,"沙茶羊肉燴飯":105,"什錦海鮮燴飯":110,"鳳梨牛肉燴飯":110,"蝦仁燴飯":105,"雞肉燴飯":105,"豬肉燴飯":100,"炒大陳年糕":130,"牛肉炒麵":105,"肉絲炒麵":90,"什錦湯麵":110,"蔥蛋":110,"炒青菜":70}, toppings: {"正常":0,"加麵/飯+20":20,"加蛋+15":15,"加年糕+35":35} },
-    "邱記炒麵（東信店）": { menu: {"素炒飯":75,"蛋炒飯":75,"肉絲炒飯":75,"蝦仁炒飯":90,"滷肉飯(大)":45,"素食麵":75,"肉絲麵":75,"蛤蜊麵":90,"鮮蝦麵":90,"肉片麵":90,"豬肝麵":90,"什錦麵":90,"蚵仔麵":110,"海鮮麵":110,"蛋花湯":30,"蛤蜊湯":50,"綜合滷味":40,"皮蛋豆腐":45}, toppings: {"油麵":0,"米粉":0,"烏龍":0,"冬粉":0,"粄條":0,"年糕":0,"粥":0,"咖哩口味+5":5} },
-    "大碗牛肉麵": { menu: {"牛肉麵(小)":130,"牛肉麵(大)":170,"牛肉乾麵(小)":130,"牛肉乾麵(大)":170,"牛肉冬粉":130,"牛肉湯麵":80,"牛肉湯餃":110,"水餃(10顆)":70,"酢醬麵":80,"特製涼麵":60,"紅油抄手":80,"牛腱肉":80,"花干":35}, toppings: {"正常":0,"加大+20":20} },
-    "麥克麵線": { menu: {"麵線焿(小)":45,"麵線焿(大)":65,"全焿(小)":70,"全焿(大)":120,"蚵仔煎":65,"蝦仁煎":65,"肉圓":40}, toppings: {"正常":0} },
-    "豆乾包祥豐街": { menu: {"豆干包(2個)":50,"炒麵(小)":35,"炒麵(大)":50,"炒米粉(小)":35,"炒米粉(大)":50,"招牌湯":65,"綜合湯":50,"魚丸湯":50,"魷魚焿":50,"乾麵":35,"冬粉湯":35,"豆干包(8個盒裝)":140}, toppings: {"正常":0} },
-    "美香齋滷味": { menu: {"套餐 SET A":190,"套餐 SET B":195,"套餐 SET C":195,"滷味拼盤":100,"水餃(10顆)":60,"乾拌麵":50}, toppings: {"正常":0,"加辣":0} },
-    "蒟蒻屋": { menu: {"綜合剉冰":85,"日式金時冰":90,"紅豆牛奶冰":95,"蒟蒻綠豆湯":50,"蒟蒻紅豆湯":55,"蒟蒻有機豆花":45,"美人湯":70,"香雞排":85,"雞腿":90,"炸湯圓":30,"月亮蝦餅":45}, toppings: {"冷":0,"熱":0,"加配料+10":10} },
-    "鶴茶樓": { menu: {"鶴頂紅茶":35,"綺夢那堤":60,"神農牛乳":65,"泰式奶茶":65,"粉粿奶茶":60,"黑糖珍珠奶茶":65,"荔枝紅茶":50}, toppings: {"正常":0,"完全去冰":0,"微糖":0,"杏仁凍+15":15,"粉粿+15":15} },
-    "可不可 #基隆深溪": { menu: {"熟成紅茶":35,"胭脂紅茶":40,"白玉歐蕾":60,"熟成歐蕾":55,"胭脂那堤":60,"金鑽鳳梨綠":60}, toppings: {"正常":0,"白玉+10":10,"水玉+10":10} },
-    "拾汣茶屋": { menu: {"愛玉公爵":45,"珍珠鮮奶茶":60,"純茶":30,"粉粿桂花":45,"拾汣奶茶":45,"冬瓜茶":30,"甘蔗青茶":55}, toppings: {"正常":0,"粉粿+10":10,"珍珠+10":10} },
-    "迷客夏": { menu: {"珍珠鮮奶":75,"伯爵拿鐵":65,"大甲芋頭鮮奶":80,"青茶":30,"初露綠茶":30,"琥珀拿鐵":65}, toppings: {"正常":0,"白玉珍珠+10":10} },
-    "龜記": { menu: {"紅柚翡翠":75,"蘋果紅萱":55,"三十四號紅茶":40,"三韻奶茶":55,"冬瓜鮮乳":65,"秀菊杯":65}, toppings: {"正常":0,"珍珠+10":10} },
-    "清心福全 #海大": { menu: {"烏龍綠茶":30,"優多綠茶":45,"隱藏版":50,"珍珠奶茶":50,"錫蘭紅茶":30,"仙草凍奶茶":50}, toppings: {"正常":0,"珍珠+10":10,"布丁+20":20} },
-    "五桐號": { menu: {"五桐茶":35,"杏仁凍五桐茶":45,"綠茶凍五桐茶":45,"青茶凍五桐茶":45,"老實人紅茶":35,"五桐奶茶":50}, toppings: {"正常":0,"茶凍+10":10} },
-    "有飲": { menu: {"旺旺來水果茶":65,"粉粿紅":40,"焦糖拿鐵":75,"柳橙綠茶":60,"憨吉奶霜":70,"珍珠鮮奶茶":65}, toppings: {"正常":0,"粉粿+10":10} },
-    "林香檸": { menu: {"招牌檸檬茶":55,"綠妍檸檬茶":55,"泰式檸檬茶":60,"鴨屎香檸檬茶":65,"黑金檸檬茶":60}, toppings: {"正常":0} },
-    "Mr.Wish": { menu: {"水果茶":60,"光果茶":65,"珍珠奶茶":50,"愛文芒果冰沙":85,"野莓纖果飲":65}, toppings: {"正常":0,"珍珠+10":10,"愛玉+10":10} },
-    "Coco #基隆海洋": { menu: {"奶茶三兄弟":55,"百香雙響炮":50,"星空葡萄":75,"莊園紅茶":35,"芋頭牛奶":70}, toppings: {"正常":0,"珍珠+10":10,"布丁+15":15} },
-    "Comebuy #新豐": { menu: {"海神":40,"蘋果冰茶":55,"絕代雙Q奶茶":55,"纖美小紫蘇":50,"玩火":40}, toppings: {"正常":0,"珍珠+10":10,"粉條+10":10} },
-    "水雲堂 #義二店": { menu: {"黑糖珍珠鮮奶":65,"純茶":30,"水果茶":60,"芝士奶蓋紅茶":60,"金鑽鳳梨綠":60,"玫瑰拿鐵":65}, toppings: {"正常":0,"珍珠+10":10,"仙草+10":10} }
-};
-
-let currentStore = "廖媽媽麵飯館-新豐店";
-let isHost = !window.location.search.includes("mode=client");
-
-function init() {
-    const grid = document.getElementById('storeSelector');
-    if (!isHost) {
-        document.getElementById('hostOnlyControls').style.display = 'none';
-        document.getElementById('qrSection').style.display = 'none';
-    }
-    Object.keys(storesData).sort((a,b)=>a.localeCompare(b,'zh-Hant')).forEach(name => {
-        grid.innerHTML += `<div class="store-card" id="btn-${name}" onclick="setStore('${name}', true)">${name}</div>`;
+    db.ref('orders').on('value', snapshot => {
+        const data = snapshot.val();
+        renderAdmin(data);
     });
-    db.ref('activeStore').on('value', (snap) => setStore(snap.val() || "廖媽媽麵飯館-新豐店", false));
-    db.ref('orders').on('value', (snap) => renderOrders(snap.val()));
-    new QRCode(document.getElementById("qrcode"), { text: window.location.href.split('?')[0] + "?mode=client", width: 150, height: 150 });
-}
 
-function setStore(name, updateDb) {
-    currentStore = name;
-    document.querySelectorAll('.store-card').forEach(c => c.classList.remove('active'));
-    if(document.getElementById(`btn-${name}`)) document.getElementById(`btn-${name}`).classList.add('active');
-    const s = storesData[name];
-    document.getElementById('targetStoreTitle').innerText = `正在點餐：${name}`;
-    let itemHtml = Object.keys(s.menu).sort().map(k => `<option value="${k}">${k} ($${s.menu[k]})</option>`).join('');
-    itemHtml += `<option value="CUSTOM" style="color:red; font-weight:bold;">✨ 自行輸入品項 ✨</option>`;
-    document.getElementById('itemSelect').innerHTML = itemHtml;
-    let topHtml = Object.keys(s.toppings).map(k => `<option value="${k}">${k} (+$${s.toppings[k]})</option>`).join('');
-    topHtml += `<option value="CUSTOM" style="color:red; font-weight:bold;">✨ 自行輸入規格/加價 ✨</option>`;
-    document.getElementById('toppingSelect').innerHTML = topHtml;
-    if (isHost && updateDb) db.ref('activeStore').set(name);
-}
+    function renderAdmin(orders) {
+        const wall = document.getElementById('order-wall');
+        const statsList = document.getElementById('stats-list');
+        const revSpan = document.getElementById('daily-revenue');
+        
+        wall.innerHTML = '';
+        let totalRev = 0;
+        let itemCounts = {}; // 用來統計項目
 
-function toggleManual(id, show) { document.getElementById(id).style.display = show ? 'block' : 'none'; }
+        if (!orders) {
+            statsList.innerHTML = "尚無數據";
+            revSpan.innerText = "0";
+            return;
+        }
 
-function sendOrder() {
-    let name = document.getElementById('personSelect').value;
-    if (name === '其他') name = document.getElementById('manualName').value;
-    if (!name) return alert("請輸入姓名！");
-    let item, itemPrice, top, topPrice;
-    if (document.getElementById('itemSelect').value === 'CUSTOM') {
-        item = document.getElementById('customItemName').value;
-        itemPrice = parseInt(document.getElementById('customItemPrice').value) || 0;
-        if (!item) return alert("請輸入品項名稱！");
-    } else {
-        item = document.getElementById('itemSelect').value;
-        itemPrice = storesData[currentStore].menu[item];
+        for (let id in orders) {
+            const o = orders[id];
+            totalRev += parseInt(o.total);
+            
+            // 統計每個品項出現幾次
+            o.items.forEach(name => {
+                itemCounts[name] = (itemCounts[name] || 0) + 1;
+            });
+
+            // 顯示訂單卡片
+            wall.innerHTML = `
+                <div class="col-12 mb-2">
+                    <div class="card p-2 text-dark">
+                        <b>時間: ${new Date(o.timestamp).toLocaleTimeString()}</b>
+                        <div>品項: ${o.items.join(', ')}</div>
+                        <div class="text-danger text-end">金額: $${o.total}</div>
+                    </div>
+                </div>` + wall.innerHTML;
+        }
+
+        // 渲染統計列表
+        statsList.innerHTML = Object.entries(itemCounts).map(([name, count]) => `
+            <li class="list-group-item d-flex justify-content-between">
+                <span>${name}</span>
+                <span class="badge bg-primary rounded-pill">${count} 份</span>
+            </li>
+        `).join('');
+        revSpan.innerText = totalRev;
     }
-    if (document.getElementById('toppingSelect').value === 'CUSTOM') {
-        top = document.getElementById('customTopName').value;
-        topPrice = parseInt(document.getElementById('customTopPrice').value) || 0;
-        if (!top) return alert("請輸入規格備註！");
-    } else {
-        top = document.getElementById('toppingSelect').value;
-        topPrice = storesData[currentStore].toppings[top];
-    }
-    db.ref('orders').push({ name, item, top, price: itemPrice + topPrice, store: currentStore });
-    alert("點餐成功！");
-}
 
-function renderOrders(data) {
-    const container = document.getElementById('orderDisplay');
-    container.innerHTML = '';
-    let total = 0;
-    if(data) {
-        Object.keys(data).forEach(key => {
-            const o = data[key];
-            total += o.price;
-            container.innerHTML += `
-                <div class="stats-list-card">
-                    <b>👤 ${o.name}</b> <span style="float:right; font-weight:900; color:var(--primary-purple);">$${o.price}</span><br>
-                    <small>📍 ${o.store.split(' ')[0]}</small><br>
-                    <span>${o.item}</span><br>
-                    <small style="color:#666">${o.top}</small>
-                    ${isHost ? `<button onclick="db.ref('orders/${key}').remove()" style="position:absolute; bottom:5px; right:5px; color:red; border:none; background:none; cursor:pointer;">❌</button>` : ''}
-                </div>`;
-        });
+    function resetDay() {
+        if(confirm("確定要清空今天的所有資料嗎？")) db.ref('orders').remove();
     }
-    document.getElementById('totalPrice').innerText = total;
-}
-
-function copyLine() {
-    db.ref('orders').once('value', (snap) => {
-        const data = snap.val();
-        if(!data) return alert("尚無訂單");
-        let msg = `📋 【電機科智慧點餐回報】\n📍 店家：${currentStore}\n----------------------\n`;
-        Object.values(data).forEach(o => { msg += `👤 ${o.name}: ${o.item} (${o.top}) $${o.price}\n`; });
-        msg += `----------------------\n🔥 總金額：$${document.getElementById('totalPrice').innerText}`;
-        navigator.clipboard.writeText(msg); alert("已複製！");
-    });
-}
-function clearAll() { if(confirm("確定清空所有訂單嗎？")) db.ref('orders').remove(); }
-window.onload = init;
 </script>
 </body>
 </html>
-
